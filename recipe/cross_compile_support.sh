@@ -52,7 +52,7 @@ if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
         /usr/bin/qemu-${HOST_PLATFORM_ARCH}-static --version
 
 
-        if [[ "${CUDA_COMPILER_VERSION}" == "11.2" || "${CUDA_COMPILER_VERSION}" == "11.8" ]]; then
+        if [[ "${CUDA_COMPILER_VERSION}" == "11.8" ]]; then
             EXTRACT_DIR=$(mktemp -d)
             pushd ${EXTRACT_DIR}
                 if [[ "${HOST_PLATFORM_ARCH}" == "aarch64" ]]; then
@@ -63,12 +63,11 @@ if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
                 # download manifest for latest CUDA patch version
                 CUDA_MANIFEST_VERSION=$(
                     case "${CUDA_COMPILER_VERSION}" in
-                        ("11.2") echo "11.2.2" ;;
                         ("11.8") echo "11.8.0" ;;
                         (*) echo "" ;;
                     esac)
                 if [[ "${CUDA_MANIFEST_VERSION}" == "" ]]; then
-                    echo 'cross compiling with cuda not in (11.2, 11.8, 12.0+) not supported yet'
+                    echo 'cross compiling with cuda not in (11.8, 12.0+) not supported yet'
                     exit 1
                 fi
                 curl -L https://developer.download.nvidia.com/compute/cuda/repos/rhel8/${CUDA_HOST_PLATFORM_ARCH}/version_${CUDA_MANIFEST_VERSION}.json > manifest.json
@@ -90,16 +89,8 @@ if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
                     "libnpp_devel:libnpp"
                     "libnvjpeg_devel:libnvjpeg"
                     "cuda_compat:nvidia_driver"
+                    "cuda_profiler_api:cuda_sanitizer_api"
                 )
-
-                # Some packages are added after CUDA 11.2+.
-                # Handle them seperately here.
-                # Take version info from packages available in the manifest.
-                if [[ "${CUDA_COMPILER_VERSION}" == "11.8" ]]; then
-                    DEVELS+=(
-                        "cuda_profiler_api:cuda_sanitizer_api"
-                    )
-                fi
 
                 # add additional packages to manifest with same version (and formatting)
                 # as for key "from_old" specified in the mapping above
